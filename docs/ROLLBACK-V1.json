@@ -1,0 +1,16 @@
+{
+  "recorded_at": "2026-11-04",
+  "project_id": "appgprj_6ae9ddd15b3c81918479720e640cf360",
+  "version_number": 1,
+  "version_id": "appgprj_6ae9ddd15b3c81918479720e640cf360~appgver_dfa46e487bc48191abd3b0194b8da75e",
+  "deployment_id": "appgdep_6ae9e60bb3308191b375be35b20c99dc",
+  "verified_deployment_status": "succeeded",
+  "url": "https://pig-house-exploration-1103.astralolm10.chatgpt.site",
+  "commit_sha": "cc329f2dd7167ed53b8ea1a66e1cc60112b26ff6",
+  "git_tag": "release/v1-online-verified-2026-11-04",
+  "archive_content_hash": "sha256:4352a6b49c5b6b10b63dd4e85fdc7bdbe8baa022ddad1f7d8274f813342aa17f",
+  "archive_file_count": 80,
+  "archive_uncompressed_size_bytes": 1792000,
+  "user_reported_acceptance": "Three-player online game in room C2ABFD1D worked successfully",
+  "data_restore_available": false
+}
