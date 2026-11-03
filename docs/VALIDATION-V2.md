@@ -10,6 +10,8 @@
 |ラウンド境界|純粋ロジックと実D1で検証。最後の公開を同時に再送しても1件だけ確定、再配布は1回。保存済み期限までは次手を拒否|
 |6時間の期限|旧7日期限の行を含め、6時間直前は利用可能、境界・経過後は拒否。閲覧・再接続・失敗・重複再送は期限を延ばさない|
 |チャット|各ラウンド100件の上限。他ラウンドの会話を保持。終局・再戦・待機室復帰で消去|
+|Sites最終ビルド|PASS。公開アーカイブを同じGitコミットから作成|
+|公開後確認|Version 2のデプロイ成功。公開ページ200、v0.2.0・6時間の表示、未ログイン/偽装identity API401、QRの行き先一致|
 |型チェック|`npm run typecheck` PASS|
 |旧版互換性|`scripts/qa-rollback.mjs` PASS。3〜10人、最終実行160状態。v1→v2の読込とv2→v1の読込・次手・再戦を合成データだけで検証|
 |ローカルHTTP|ビルド済みWorkerで3人＋観戦者。12手・第4ラウンド・探検家勝利。未認証401、異なるOrigin403、未参加403、古いversion409|
@@ -38,3 +40,5 @@ node --experimental-strip-types scripts/qa-rollback.mjs
 ビルド済みWorkerをlocalhost:8787で起動し、初期化済みのローカルD1で `node scripts/qa-http.mjs setup` → `node scripts/qa-http.mjs play`。`chat` / `step` はブラウザ確認用の合成投稿・1手進行。全モードで宛先はループバック固定。本番へは使わない。
 
 復旧先と制約は [PLAYER-FEEDBACK-V2.md](PLAYER-FEEDBACK-V2.md)、固定済みVersion 1の識別子は [ROLLBACK-V1.json](ROLLBACK-V1.json) を参照。
+
+公開版の識別子とGit SHAは [RELEASE-V2.json](RELEASE-V2.json)。公開ブラウザでも人数別配役表を確認し、`outputs/v2-published-rules.jpg` にスクリーンショットを保存。

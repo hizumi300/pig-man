@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-04",
+  "app_version": "0.2.0",
+  "project_id": "appgprj_6ae9ddd15b3c81918479720e640cf360",
+  "version_number": 2,
+  "version_id": "appgprj_6ae9ddd15b3c81918479720e640cf360~appgver_708ccb3caeb88191b0086c71eb5731e8",
+  "deployment_id": "appgdep_6aea00b80b888191bb8c239c00a71941",
+  "status": "succeeded",
+  "url": "https://pig-house-exploration-1103.astralolm10.chatgpt.site",
+  "source_commit": "b09a19eaaad4d4cbc2bade072710f7763283d5ca",
+  "git_tag": "release/v0.2.0",
+  "archive_content_hash": "sha256:bdec0571b5e4e89d9e5b158888097758f36d414950ec9bb8bdc9b3104e873fd7",
+  "rollback_version_id": "appgprj_6ae9ddd15b3c81918479720e640cf360~appgver_dfa46e487bc48191abd3b0194b8da75e",
+  "checks": {
+    "tests": 17,
+    "simulated_games": 800,
+    "typecheck": true,
+    "build": true,
+    "local_http_players": 3,
+    "local_http_spectators": 1,
+    "local_http_turns": 12,
+    "live_page": 200,
+    "live_anonymous_api": 401,
+    "live_forged_identity_api": 401,
+    "live_qr_decode": true
+  },
+  "remaining": [
+    "Real multi-account playtest of v0.2.0",
+    "Visual timing of short flip/round animations on real phones"
+  ]
+}
