@@ -30,15 +30,17 @@
     "types": [
       "node",
       "@cloudflare/workers-types"
-    ]
+    ],
+    "allowImportingTsExtensions": true
   },
   "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "lib/**/*.ts",
+    "lib/**/*.mts",
+    "db/**/*.ts",
+    "worker/**/*.ts",
+    "cloudflare-env.d.ts"
   ],
   "exclude": [
     "node_modules",
@@ -48,6 +50,7 @@
     ".wrangler",
     ".sites-runtime",
     "outputs",
-    "work"
+    "work",
+    "legacy"
   ]
 }

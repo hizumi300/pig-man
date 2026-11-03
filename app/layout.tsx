@@ -1,26 +1,10 @@
-import type { Metadata } from "next";
-import "./globals.css";
-
+import type { Metadata } from 'next';
+import './globals.css';
 export const metadata: Metadata = {
-  title: "Starter Project",
-  description: "A clean starting point for building your site.",
-  other: {
-    "codex-preview": "development",
-  },
-  icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-  },
+  title: '豚小屋探検隊 | 扉の向こうに、仲間か、罠か。',
+  description: '仲間を信じて、子豚を救え。3〜10人で遊ぶ正体隠匿カードゲーム。ChatGPTでログインして探検をはじめよう。',
+  icons: { icon: '/favicon.svg' },
 };
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-      <body className="antialiased">{children}</body>
-    </html>
-  );
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return <html lang="ja"><body>{children}</body></html>;
 }

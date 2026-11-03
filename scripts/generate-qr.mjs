@@ -1,0 +1,11 @@
+import QRCode from 'qrcode';
+import { PNG } from 'pngjs';
+import jsQR from 'jsqr';
+import { readFile, writeFile } from 'node:fs/promises';
+const url='https://pig-house-exploration-1103.astralolm10.chatgpt.site';
+await QRCode.toFile('public/invite-qr.png',url,{width:720,margin:4,errorCorrectionLevel:'M',color:{dark:'#17251aff',light:'#ffffffff'}});
+await writeFile('public/invite-qr.svg',await QRCode.toString(url,{type:'svg',margin:4,errorCorrectionLevel:'M'}));
+const png=PNG.sync.read(await readFile('public/invite-qr.png'));
+const decoded=jsQR(new Uint8ClampedArray(png.data),png.width,png.height);
+if(decoded?.data!==url)throw new Error('QR decode verification failed');
+console.log('QR generated and independently decoded: '+decoded.data);
