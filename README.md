@@ -35,6 +35,7 @@ ChatGPTログインで参加する3〜10人の正体隠匿カードゲーム。�
 |`tests/`|800ゲームの性質テスト、実D1シミュレータによる同時操作テスト|
 |`public/invite-qr.png`, `public/invite-qr.svg`|ロビーへのQRコード|
 |`docs/RENOVATION.md`|原因分析・設計判断・制約・次の検証|
+|`docs/VALIDATION.md`|検証結果と再実行手順|
 
 Sites標準のVinextサーバー統合を利用し、ゲームルールはフレームワークに依存しないTypeScriptで分離。元のExpress/Socket.io常駐プロセスは不要。画面は約2秒（ロビー5秒）間隔のHTTP同期、非表示時は停止します。
 

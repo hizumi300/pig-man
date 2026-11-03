@@ -12,7 +12,7 @@ async function api(body?: Record<string, unknown>, roomId?: string) {
     method: body ? 'POST' : 'GET', headers: body ? { 'Content-Type': 'application/json' } : {},
     body: body ? JSON.stringify(body) : undefined, cache: 'no-store', signal: AbortSignal.timeout(15000),
   });
-  const data = await response.json() as RoomView & { room: RoomView; rooms: Summary[]; roomId?: string; closed?: boolean; left?: boolean; error?: string };
+  const data = await response.json().catch(() => { throw new Error('サーバーとの接続が途切れました。少し待って同じ操作を再送してください'); }) as RoomView & { room: RoomView; rooms: Summary[]; roomId?: string; closed?: boolean; left?: boolean; error?: string };
   if (!response.ok) throw Object.assign(new Error(data.error || '通信に失敗しました'), { status: response.status });
   return data;
 }
