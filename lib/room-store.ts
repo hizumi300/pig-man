@@ -1,7 +1,7 @@
 import { applyAction, GameError, makeRoom, viewRoom, type Action, type Room } from './game.ts';
 
-type Row = { id: string; owner_key: string; state: string; version: number; expires_at: number };
-const RETENTION = 7 * 24 * 60 * 60 * 1000;
+type Row = { id: string; owner_key: string; state: string; version: number; expires_at: number; updated_at: number };
+export const RETENTION = 6 * 60 * 60 * 1000;
 export async function digest(value: string): Promise<string> {
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
   return Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, '0')).join('');
@@ -21,15 +21,17 @@ function roomId(value: unknown): string {
   return value;
 }
 export async function listRooms(db: D1Database, actor: string) {
-  const rows = await db.prepare('SELECT id, owner_key, state, version, expires_at FROM rooms WHERE expires_at > ? ORDER BY updated_at DESC LIMIT 100').bind(Date.now()).all<Row>();
+  const now = Date.now();
+  const rows = await db.prepare('SELECT id, owner_key, state, version, expires_at, updated_at FROM rooms WHERE expires_at > ? AND updated_at > ? ORDER BY updated_at DESC LIMIT 100').bind(now, now - RETENTION).all<Row>();
   return rows.results.map(row => {
     const r: Room = JSON.parse(row.state);
     return { id: r.id, title: r.title, count: r.players.length, status: r.status, locked: !!r.passwordHash, mine: r.players.some(p => p.userKey === actor) || r.spectators.some(p => p.userKey === actor), owned: row.owner_key === actor };
   });
 }
 export async function readRow(db: D1Database, id: string) {
-  const row = await db.prepare('SELECT id, owner_key, state, version, expires_at FROM rooms WHERE id = ? AND expires_at > ?').bind(roomId(id), Date.now()).first<Row>();
-  if (!row) throw new GameError('部屋が見つかりません。最終操作から7日を過ぎた部屋は終了します', 404);
+  const now = Date.now();
+  const row = await db.prepare('SELECT id, owner_key, state, version, expires_at, updated_at FROM rooms WHERE id = ? AND expires_at > ? AND updated_at > ?').bind(roomId(id), now, now - RETENTION).first<Row>();
+  if (!row) throw new GameError('部屋が見つかりません。最終操作から6時間を過ぎた部屋は終了します', 404);
   return row;
 }
 export async function readRoom(db: D1Database, id: string, actor: string) {
@@ -45,7 +47,7 @@ export async function createRoom(db: D1Database, actor: string, name: unknown, p
   const now = Date.now();
   // One durable room per creator makes creation idempotent across tabs and retries.
   await db.batch([
-    db.prepare('DELETE FROM rooms WHERE expires_at <= ?').bind(now),
+    db.prepare('DELETE FROM rooms WHERE expires_at <= ? OR updated_at <= ?').bind(now, now - RETENTION),
     db.prepare('DELETE FROM write_limits WHERE minute < ?').bind(Math.floor(now / 60000) - 1440),
   ]);
   const existing = await db.prepare('SELECT id FROM rooms WHERE owner_key = ?').bind(actor).first<{id: string}>();
@@ -70,6 +72,8 @@ export async function mutateRoom(db: D1Database, actor: string, input: Action & 
     const room: Room = JSON.parse(row.state);
     if (room.receipts.includes(receipt)) return viewRoom(room, actor, row.version);
     const member = room.players.some(p => p.userKey === actor) || room.spectators.some(p => p.userKey === actor);
+    // 再接続や同じ参加要求では部屋の寿命を延ばさない。
+    if (joining && (room.players.some(p => p.userKey === actor) || (input.type === 'spectate' && member))) return viewRoom(room, actor, row.version);
     if (joining && !member && room.passwordHash) {
       const password = parsePassword(input.password);
       if (!password || await hashPassword(password, room.passwordSalt!) !== room.passwordHash) throw new GameError('合言葉が違います', 403);
