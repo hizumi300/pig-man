@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-04",
+  "app_version": "0.4.0",
+  "project_id": "appgprj_6ae9ddd15b3c81918479720e640cf360",
+  "version_number": 4,
+  "version_id": "appgprj_6ae9ddd15b3c81918479720e640cf360~appgver_5f84100711088191870235078f813169",
+  "deployment_id": "appgdep_6aeb2e96eef481919aba79ca4eac4eb4",
+  "status": "succeeded",
+  "url": "https://pig-house-exploration-1103.astralolm10.chatgpt.site",
+  "source_commit": "da7f9c468e5a7be986a3ee3625bb44191bef3124",
+  "git_tag": "release/v0.4.0",
+  "archive_content_hash": "sha256:3886758e6829c7c74c1c55658fe4ff22d3dafc679fae919216bbdfb584cfc978",
+  "rollback_version_id": "appgprj_6ae9ddd15b3c81918479720e640cf360~appgver_dae2af02dd0c8191bd6c7c81bc96031b",
+  "rollback_conditions": "Finish V4 games, back up and close guest/custom rooms before deploying V3. Keep added tables and records. No production rollback trial performed.",
+  "checks": {
+    "tests": 25,
+    "standard_simulations": 800,
+    "custom_configurations": 40,
+    "typecheck": true,
+    "build": true,
+    "rollback_standard_states": 182,
+    "local_http_players": 6,
+    "local_http_turns": 16,
+    "local_http_guest_transfer": true,
+    "live_page": 200,
+    "live_anonymous_session": 401,
+    "live_forged_identity": 401,
+    "live_guest_entry": true,
+    "live_records": true,
+    "live_qr": 200
+  },
+  "deferred": [
+    "Postman, letters and third faction: V5+ pending player-count balance testing",
+    "Guard, faction-changing and instant-loss roles"
+  ],
+  "remaining": [
+    "Human balance testing for investigation roles",
+    "Real-account guest transfer and physical-phone multi-user playtest"
+  ]
+}
