@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-04",
+  "app_version": "0.4.1",
+  "display_version": "V4.1",
+  "project_id": "appgprj_6ae9ddd15b3c81918479720e640cf360",
+  "version_number": 5,
+  "version_id": "appgprj_6ae9ddd15b3c81918479720e640cf360~appgver_e2b2b1f108bc81919223ff70623ae434",
+  "deployment_id": "appgdep_6aeb30f8d6b88191b107a37551a1fc14",
+  "status": "succeeded",
+  "url": "https://pig-house-exploration-1103.astralolm10.chatgpt.site",
+  "source_commit": "41aca081420801077ee7ca2ca96880243c47edf4",
+  "git_tag": "release/v0.4.1",
+  "archive_content_hash": "sha256:9985401653e5897c1306965e60caa1247afd36799f8edcad9da7f3b595c3c250",
+  "rollback_version_id": "appgprj_6ae9ddd15b3c81918479720e640cf360~appgver_5f84100711088191870235078f813169",
+  "checks": {
+    "tests": 25,
+    "typecheck": true,
+    "build": true,
+    "local_room_lobby_audio_continuity": true,
+    "keyboard_link": true,
+    "volume_preserved": true,
+    "off_preserved": true,
+    "live_home_audio_before_seconds": 13.374694,
+    "live_home_audio_after_seconds": 13.447881,
+    "live_audio_paused": false
+  },
+  "limitations": [
+    "Full browser reload, tab close and external authentication navigation recreate the document and cannot retain uninterrupted playback"
+  ],
+  "database_changes": false
+}
