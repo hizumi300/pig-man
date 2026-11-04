@@ -1,10 +1,11 @@
 // Pure game rules. Storage, authentication, transport and UI are deliberately separate.
 import { roleRule } from './role-rules.ts';
 import { MAX_NAME_LENGTH, nameLength, normalizeDisplayName } from './display-name.ts';
+import { DEFAULT_RULES, validRules, checkSeats, type Rules, type Special } from './custom-rules.ts';
 export type CardType = 'treasure' | 'trap' | 'empty';
 export type Role = 'adventurer' | 'guardian';
 export type Card = { id: string; type: CardType; revealed: boolean };
-export type Player = { id: string; userKey: string; name: string; hand: Card[]; role: Role | null };
+export type Player = { id: string; userKey: string; name: string; hand: Card[]; role: Role | null; special?: Special | null; abilityUsed?: boolean; intel?: { round: number; targetId: string; cardId?: string; cardType?: CardType; faction?: Role }; ranked?: boolean; recordActor?: string };
 export type Entry = { id: string; text: string; name: string; at: number; round?: number; gameNumber?: number; kind?: 'message' | 'round' };
 export const ROUND_PAUSE_MS = 3000;
 export type RevealFrame = {
@@ -19,6 +20,7 @@ export type Room = {
   treasureFound: number; trapTriggered: number; winner: Role | null;
   logs: Entry[]; chat: Entry[]; receipts: string[]; gameNumber: number;
   passwordHash: string | null; passwordSalt: string | null;
+  rules?: Rules; matchId?: string;
   roleSetup?: { gameNumber: number; version: 2 };
   lastReveal?: RevealFrame | null;
 };
@@ -58,9 +60,10 @@ function handCounts(hand: Card[]) {
 function roundMarker(room: Room, now: number) {
   room.chat.push({ id: crypto.randomUUID(), kind: 'round', gameNumber: room.gameNumber, round: room.round, name: '', text: `ラウンド ${room.round}`, at: now });
 }
-export function makeRoom(id: string, userKey: string, name: unknown): Room {
+export function makeRoom(id: string, userKey: string, name: unknown, settings?: unknown): Room {
+  let rules: Rules; try { rules=validRules(settings); } catch(e) { throw new GameError((e as Error).message); }
   const player: Player = { id: crypto.randomUUID(), userKey, name: cleanName(name), hand: [], role: null };
-  return { id, title: `${player.name}の探検隊`, hostId: player.id, status: 'waiting', players: [player], spectators: [], round: 0, flipped: 0, keyHolderId: null, treasureGoal: 0, trapGoal: 0, treasureFound: 0, trapTriggered: 0, winner: null, logs: [], chat: [], receipts: [], gameNumber: 0, passwordHash: null, passwordSalt: null };
+  return { rules, id, title: `${player.name}の探検隊`, hostId: player.id, status: 'waiting', players: [player], spectators: [], round: 0, flipped: 0, keyHolderId: null, treasureGoal: 0, trapGoal: 0, treasureFound: 0, trapTriggered: 0, winner: null, logs: [], chat: [], receipts: [], gameNumber: 0, passwordHash: null, passwordSalt: null };
 }
 function log(room: Room, text: string, now: number) {
   room.logs = [...room.logs, { id: crypto.randomUUID(), text, name: '', at: now }].slice(-60);
@@ -85,7 +88,7 @@ export function applyAction(original: Room, actor: string, action: Action, now =
     requireThat(![...room.players, ...room.spectators.filter(s => s.userKey !== actor)].some(p => p.name.toLocaleLowerCase() === name.toLocaleLowerCase()), '同じ表示名の人がいます。別の名前にしてください');
     if (action.type === 'join') {
       requireThat(room.status === 'waiting', 'ゲーム開始後は観戦で参加してください');
-      requireThat(room.players.length < 10, 'この部屋は満員です');
+      requireThat(room.players.length < (room.rules?.capacity ?? 10), 'この部屋は満員です');
       room.spectators = room.spectators.filter(p => p.userKey !== actor);
       room.players.push({ id: crypto.randomUUID(), userKey: actor, name, hand: [], role: null });
       log(room, `${name}が探検隊に加わりました`, now);
@@ -109,19 +112,36 @@ export function applyAction(original: Room, actor: string, action: Action, now =
     case 'restart': {
       requireThat(player?.id === room.hostId, 'ホストだけが開始できます', 403);
       requireThat(action.type === 'start' ? room.status === 'waiting' : room.status === 'finished', '現在の状態では開始できません', 409);
-      const n = room.players.length, goal = goals(n);
+      const n = room.players.length, goal = goals(n), rules=room.rules ?? DEFAULT_RULES;
+      try { checkSeats(rules,n); } catch(e) { throw new GameError((e as Error).message); }
+      if(rules.mode==='custom')goal.trap=rules.traps;
+      room.matchId=crypto.randomUUID();
       room.status = 'playing'; room.round = 1; room.flipped = 0; room.winner = null;
       room.treasureFound = 0; room.trapTriggered = 0; room.treasureGoal = goal.treasure; room.trapGoal = goal.trap;
       room.gameNumber++; room.logs = []; room.chat = []; room.lastReveal = null;
       room.roleSetup = { gameNumber: room.gameNumber, version: 2 };
       roundMarker(room, now);
       const pool = roleRule(n)!;
-      const roles = shuffle([...Array<Role>(pool.adventurers).fill('adventurer'), ...Array<Role>(pool.guardians).fill('guardian')], random).slice(0, n);
-      room.players.forEach((p, i) => { p.role = roles[i]; });
+      const roles = rules.mode==='standard' ? shuffle([...Array<Role>(pool.adventurers).fill('adventurer'), ...Array<Role>(pool.guardians).fill('guardian')], random).slice(0, n) : shuffle([...Array<Role>(n-rules.guardians).fill('adventurer'), ...Array<Role>(rules.guardians).fill('guardian')],random);
+      room.players.forEach((p, i) => { p.role = roles[i]; p.special=null; p.abilityUsed=false; delete p.intel; });
+      const explorers=shuffle(room.players.filter(p=>p.role==='adventurer'),random);
+      if(rules.mode==='custom'){
+        if(rules.appraiser)explorers.shift()!.special='appraiser';
+        if(rules.keeper){const keeper=explorers.shift()!; keeper.special='keeper'; const target=shuffle(room.players.filter(p=>p.id!==keeper.id),random)[0]; keeper.intel={round:1,targetId:target.id,faction:target.role!};}
+      }
       const cards = Array.from({ length: n * 5 }, (_, i): Card => ({ id: crypto.randomUUID(), type: i < goal.treasure ? 'treasure' : i < goal.treasure + goal.trap ? 'trap' : 'empty', revealed: false }));
       deal(room, cards, random);
       room.keyHolderId = room.players[Math.floor(random() * n)].id;
       log(room, '探検開始！鍵を持つ人が、他の隊員の部屋を1つ開きます', now);
+      break;
+    }
+    case 'inspect': {
+      requireThat(room.status==='playing' && player?.special==='appraiser' && !player.abilityUsed,'鑑定は豚小屋鑑定士が探検中に1回だけ使えます',403);
+      requireThat(!room.lastReveal || now>=room.lastReveal.until,'ラウンド切替中です',409);
+      const target=room.players.find(p=>p.id===action.targetId && p.id!==player.id);
+      const card=target?.hand.find((c,i)=>publicCardId(room,i)===action.cardId && !c.revealed);
+      requireThat(target&&card,'他の隊員の未公開カードを選んでください',409);
+      player.abilityUsed=true; player.intel={round:room.round,targetId:target.id,cardId:String(action.cardId),cardType:card.type};
       break;
     }
     case 'reveal': {
@@ -155,7 +175,7 @@ export function applyAction(original: Room, actor: string, action: Action, now =
         }
       }
       if (room.winner) {
-        room.status = 'finished'; room.chat = [];
+        room.status = 'finished';
         room.lastReveal.until = now + ROUND_PAUSE_MS;
         log(room, room.winner === 'adventurer' ? '全ての子豚を救出！探検家チームの勝利' : '豚男チームの勝利！探検隊は脱出できませんでした', now);
       }
@@ -166,7 +186,7 @@ export function applyAction(original: Room, actor: string, action: Action, now =
       const text = action.message.trim();
       requireThat(text.length > 0 && text.length <= 300 && !/[\p{Cc}\p{Cf}]/u.test(text), 'メッセージは1〜300文字で入力してください');
       // 各ラウンドの最新100件を残す。他ラウンドの会話を投稿連打で消さない。
-      const round = room.status === 'playing' ? room.round : 0;
+      const round = room.status !== 'waiting' ? room.round : 0;
       const sameRound = room.chat.filter(m => m.kind !== 'round' && m.gameNumber === room.gameNumber && m.round === round);
       const remove = new Set(sameRound.slice(0, Math.max(0, sameRound.length - 99)).map(m => m.id));
       room.chat = [...room.chat.filter(m => !remove.has(m.id)), { id: crypto.randomUUID(), kind: 'message' as const, gameNumber: room.gameNumber, round, name: player?.name ?? spectator!.name, text, at: now }].slice(-505);
@@ -178,7 +198,7 @@ export function applyAction(original: Room, actor: string, action: Action, now =
       room.status = 'waiting'; room.round = 0; room.keyHolderId = null; room.winner = null;
       room.treasureFound = 0; room.trapTriggered = 0; room.flipped = 0;
       room.chat = []; room.lastReveal = null;
-      room.players.forEach(p => { p.hand = []; p.role = null; });
+      room.players.forEach(p => { p.hand = []; p.role = null; p.special=null; delete p.intel; p.abilityUsed=false; });
       break;
     }
     default: throw new GameError('対応していない操作です');
@@ -193,6 +213,7 @@ export function viewRoom(room: Room, actor: string, version: number, now = Date.
   const frame = room.lastReveal?.gameNumber === room.gameNumber ? room.lastReveal : null;
   return {
     id: room.id, title: room.title, hostId: room.hostId, status: room.status, version, serverNow: now, gameNumber: room.gameNumber,
+    rules: room.rules ?? DEFAULT_RULES, myIntel:me?.intel??null,
     legacyRoles: room.status !== 'waiting' && room.roleSetup?.gameNumber !== room.gameNumber,
     myCounts: me ? handCounts(me.hand) : null,
     lastReveal: frame ? {
@@ -208,6 +229,7 @@ export function viewRoom(room: Room, actor: string, version: number, now = Date.
     players: room.players.map(p => ({
       id: p.id, name: p.name,
       role: p.id === me?.id || room.status === 'finished' ? p.role : null,
+      special:p.id===me?.id||room.status==='finished'?p.special??null:null, abilityUsed:p.id===me?.id?!!p.abilityUsed:false,
       hand: handView(room, p.hand),
     })),
   };

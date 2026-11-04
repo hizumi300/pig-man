@@ -85,14 +85,14 @@ test('last reveal survives the atomic redeal, deadline gates actions and old pub
  assert.doesNotThrow(()=>applyAction(r,a.actor,a.value,r.lastReveal.until));
  assert.ok(viewRoom(r,'u0',2).players.every(p=>p.hand.every(c=>!oldIds.includes(c.id))));
 });
-test('round chat history stays bounded per round and is cleared on victory, restart and reset',()=>{
+test('round chat history stays bounded per round and is preserved on victory and cleared on restart and reset',()=>{
  let r=start(3,15);r=applyAction(r,'u0',{type:'chat',message:'round-one'});
  for(let i=0;i<3;i++){const a=action(r,'empty');r=applyAction(r,a.actor,a.value,100+i);}
  for(let i=0;i<120;i++)r=applyAction(r,'u0',{type:'chat',message:'round-two-'+i});
  assert.ok(r.chat.some(m=>m.text==='round-one'));assert.equal(r.chat.filter(m=>m.kind==='message'&&m.round===2).length,100);
  assert.deepEqual(r.chat.filter(m=>m.kind==='round').map(m=>m.round),[1,2]);
  while(r.status==='playing'){const a=action(r,'trap')||action(r);r=applyAction(r,a.actor,a.value,(r.lastReveal?.until??0)+10000);}
- assert.equal(r.chat.length,0);r=applyAction(r,'u0',{type:'chat',message:'after-game'});
+ assert.ok(r.chat.some(m=>m.text==='round-one'));r=applyAction(r,'u0',{type:'chat',message:'after-game'});
  assert.equal(applyAction(r,'u0',{type:'reset'}).chat.length,0);
  const restart=applyAction(r,'u0',{type:'restart'});assert.equal(restart.chat.length,1);assert.equal(restart.chat[0].kind,'round');assert.equal(restart.gameNumber,r.gameNumber+1);
 });

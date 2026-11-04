@@ -9,8 +9,9 @@ import * as current from '../lib/game.ts';
 const directory = await mkdtemp(join(tmpdir(), 'pig-house-rollback-'));
 try {
   const file = join(directory, 'game-v1.ts');
-  await writeFile(file, execFileSync('git', ['show', 'release/v0.2.0:lib/game.ts']));
-  await writeFile(join(directory, 'role-rules.ts'), execFileSync('git', ['show', 'release/v0.2.0:lib/role-rules.ts']));
+  await writeFile(file, execFileSync('git', ['show', 'release/v0.3.0:lib/game.ts']));
+  await writeFile(join(directory, 'role-rules.ts'), execFileSync('git', ['show', 'release/v0.3.0:lib/role-rules.ts']));
+  await writeFile(join(directory, 'display-name.ts'), execFileSync('git', ['show', 'release/v0.3.0:lib/display-name.ts']));
   const old = await import(pathToFileURL(file).href);
   let checked = 0;
   for (let n = 3; n <= 10; n++) {
@@ -40,5 +41,5 @@ try {
       checked++;
     }
   }
-  console.log(JSON.stringify({ rollbackCompatibility: 'PASS', target: 'release/v0.2.0', players: '3–10', checkedStates: checked, productionWrites: 0 }));
+  console.log(JSON.stringify({ rollbackCompatibility: 'PASS', target: 'release/v0.3.0', players: '3–10', checkedStates: checked, productionWrites: 0 }));
 } finally { await rm(directory, { recursive: true, force: true }); }

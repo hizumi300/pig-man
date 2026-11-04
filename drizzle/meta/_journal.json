@@ -8,6 +8,13 @@
       "when": 1793711905885,
       "tag": "0000_gorgeous_deadpool",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1793796658235,
+      "tag": "0001_chubby_hex",
+      "breakpoints": true
     }
   ]
 }

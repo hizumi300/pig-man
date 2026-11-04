@@ -1,3 +1,4 @@
+import { resultStatements } from './records.ts';
 import { applyAction, GameError, makeRoom, viewRoom, type Action, type Room } from './game.ts';
 
 type Row = { id: string; owner_key: string; state: string; version: number; expires_at: number; updated_at: number };
@@ -25,7 +26,7 @@ export async function listRooms(db: D1Database, actor: string) {
   const rows = await db.prepare('SELECT id, owner_key, state, version, expires_at, updated_at FROM rooms WHERE expires_at > ? AND updated_at > ? ORDER BY updated_at DESC LIMIT 100').bind(now, now - RETENTION).all<Row>();
   return rows.results.map(row => {
     const r: Room = JSON.parse(row.state);
-    return { id: r.id, title: r.title, count: r.players.length, status: r.status, locked: !!r.passwordHash, mine: r.players.some(p => p.userKey === actor) || r.spectators.some(p => p.userKey === actor), owned: row.owner_key === actor };
+    return { id: r.id, title: r.title, count: r.players.length, capacity:r.rules?.capacity??10, status: r.status, locked: !!r.passwordHash, mine: r.players.some(p => p.userKey === actor) || r.spectators.some(p => p.userKey === actor), owned: row.owner_key === actor };
   });
 }
 export async function readRow(db: D1Database, id: string) {
@@ -43,7 +44,7 @@ export async function limitWrites(db: D1Database, actor: string) {
   const row = await db.prepare('INSERT INTO write_limits (actor, minute, count) VALUES (?, ?, 1) ON CONFLICT(actor) DO UPDATE SET minute = excluded.minute, count = CASE WHEN write_limits.minute = excluded.minute THEN write_limits.count + 1 ELSE 1 END RETURNING count').bind(actor, minute).first<{count: number}>();
   if (!row || row.count > 60) throw new GameError('操作が多すぎます。1分ほど待ってください', 429);
 }
-export async function createRoom(db: D1Database, actor: string, name: unknown, passwordValue: unknown) {
+export async function createRoom(db: D1Database, actor: string, name: unknown, passwordValue: unknown, settings?: unknown) {
   const now = Date.now();
   // One durable room per creator makes creation idempotent across tabs and retries.
   await db.batch([
@@ -54,7 +55,7 @@ export async function createRoom(db: D1Database, actor: string, name: unknown, p
   if (existing) return { roomId: existing.id };
   const password = parsePassword(passwordValue);
   const id = crypto.randomUUID().replaceAll('-', '').slice(0, 8).toUpperCase();
-  const room = makeRoom(id, actor, name);
+  const room = makeRoom(id, actor, name, settings);
   if (password) { room.passwordSalt = crypto.randomUUID(); room.passwordHash = await hashPassword(password, room.passwordSalt); }
   const result = await db.prepare('INSERT INTO rooms (id, owner_key, state, version, updated_at, expires_at) VALUES (?, ?, ?, 1, ?, ?) ON CONFLICT DO NOTHING').bind(id, actor, JSON.stringify(room), now, now + RETENTION).run();
   if (result.meta.changes) return { roomId: id };
@@ -86,6 +87,12 @@ export async function mutateRoom(db: D1Database, actor: string, input: Action & 
       return { closed: true };
     }
     const next = applyAction(room, actor, input);
+    if(input.type==='start'||input.type==='restart'){
+      for(const p of next.players){
+        const linked=p.userKey.startsWith('g:')?await db.prepare('SELECT account_key FROM guest_sessions WHERE actor=?').bind(p.userKey).first<{account_key:string|null}>():null;
+        p.recordActor=linked?.account_key??p.userKey; p.ranked=!p.recordActor.startsWith('g:');
+      }
+    }
     next.receipts = [...next.receipts, receipt].slice(-80);
     const now = Date.now();
     if (next.players.length === 0) {
@@ -93,7 +100,12 @@ export async function mutateRoom(db: D1Database, actor: string, input: Action & 
       if (!deleted.meta.changes) throw new GameError('部屋が更新されました。もう一度お試しください', 409);
       return { left: true };
     }
-    const updated = await db.prepare('UPDATE rooms SET state = ?, version = version + 1, updated_at = ?, expires_at = ? WHERE id = ? AND version = ?').bind(JSON.stringify(next), now, now + RETENTION, id, row.version).run();
+    const state=JSON.stringify(next);
+    const statements=[db.prepare('UPDATE rooms SET state = ?, version = version + 1, updated_at = ?, expires_at = ? WHERE id = ? AND version = ?').bind(state, now, now + RETENTION, id, row.version)];
+    statements.push(db.prepare('INSERT INTO presence (id,seen) SELECT ?,? FROM rooms WHERE id=? AND version=? AND state=? ON CONFLICT(id) DO UPDATE SET seen=excluded.seen').bind(id+':'+actor,now,id,row.version+1,state));
+    if(room.status==='playing'&&next.status==='finished')statements.push(...resultStatements(db,next,state,row.version+1,now));
+    if(input.type==='start'||input.type==='restart')statements.push(...next.players.map(p=>db.prepare('INSERT INTO presence (id,seen) SELECT ?,? FROM rooms WHERE id=? AND version=? AND state=? ON CONFLICT(id) DO UPDATE SET seen=excluded.seen').bind(id+':'+p.userKey,now,id,row.version+1,state)));
+    const [updated]=await db.batch(statements);
     if (updated.meta.changes) return input.type === 'leave' ? { left: true } : viewRoom(next, actor, row.version + 1);
     if (!joining) throw new GameError('別の操作が先に確定しました。最新の盤面を確認してください', 409);
   }

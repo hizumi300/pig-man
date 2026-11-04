@@ -8,7 +8,7 @@ const requestId=()=>crypto.randomUUID();
 test('real D1: creation retry, concurrent joining, CAS, reconnect, privacy, password and expiry',async()=>{
  const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("test")}}',d1Databases:['DB'],cf:false});
  try {
-  const db=await mf.getD1Database('DB');const sql=await readFile(new URL('../drizzle/0000_gorgeous_deadpool.sql',import.meta.url),'utf8');for(const statement of sql.split('--> statement-breakpoint'))if(statement.trim())await db.prepare(statement).run();
+  const db=await mf.getD1Database('DB');const sql=(await Promise.all(['0000_gorgeous_deadpool','0001_chubby_hex'].map(f=>readFile(new URL('../drizzle/'+f+'.sql',import.meta.url),'utf8')))).join('--> statement-breakpoint');for(const statement of sql.split('--> statement-breakpoint'))if(statement.trim())await db.prepare(statement).run();
   const created=await Promise.all(Array.from({length:8},()=>createRoom(db,'u0','host','pass123')));assert.equal(new Set(created.map(x=>x.roomId)).size,1);const id=created[0].roomId;
   assert.equal((await listRooms(db,'u0')).length,1);
   await assert.rejects(()=>mutateRoom(db,'u1',{type:'join',roomId:id,name:'one',password:'wrong',requestId:requestId()}),/合言葉/);
@@ -34,7 +34,7 @@ test('six-hour boundary applies to legacy rows; reads, invalid actions and retri
  const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("test")}}',d1Databases:['DB'],cf:false});
  const actualNow=Date.now;let now=actualNow();Date.now=()=>now;
  try{
-  const db=await mf.getD1Database('DB');const sql=await readFile(new URL('../drizzle/0000_gorgeous_deadpool.sql',import.meta.url),'utf8');for(const statement of sql.split('--> statement-breakpoint'))if(statement.trim())await db.prepare(statement).run();
+  const db=await mf.getD1Database('DB');const sql=(await Promise.all(['0000_gorgeous_deadpool','0001_chubby_hex'].map(f=>readFile(new URL('../drizzle/'+f+'.sql',import.meta.url),'utf8')))).join('--> statement-breakpoint');for(const statement of sql.split('--> statement-breakpoint'))if(statement.trim())await db.prepare(statement).run();
   const {roomId:id}=await createRoom(db,'host','host');const original=await readRow(db,id);assert.equal(original.expires_at,now+RETENTION);
   now+=1000;const view=await readRoom(db,id,'host');await listRooms(db,'host');
   await mutateRoom(db,'host',{type:'join',roomId:id,name:'ignored',requestId:requestId()});
@@ -53,7 +53,7 @@ test('six-hour boundary applies to legacy rows; reads, invalid actions and retri
 test('competing final reveals commit one redeal and enforce the persisted pause across reconnects',async()=>{
  const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("test")}}',d1Databases:['DB'],cf:false});
  try{
-  const db=await mf.getD1Database('DB');const sql=await readFile(new URL('../drizzle/0000_gorgeous_deadpool.sql',import.meta.url),'utf8');for(const statement of sql.split('--> statement-breakpoint'))if(statement.trim())await db.prepare(statement).run();
+  const db=await mf.getD1Database('DB');const sql=(await Promise.all(['0000_gorgeous_deadpool','0001_chubby_hex'].map(f=>readFile(new URL('../drizzle/'+f+'.sql',import.meta.url),'utf8')))).join('--> statement-breakpoint');for(const statement of sql.split('--> statement-breakpoint'))if(statement.trim())await db.prepare(statement).run();
   let room=makeRoom('BOUNDARY','u0','host');for(let i=1;i<3;i++)room=applyAction(room,`u${i}`,{type:'join',name:`player${i}`});
   room=applyAction(room,'u0',{type:'start'});
   const moves=r=>r.players.filter(p=>p.id!==r.keyHolderId).flatMap(p=>p.hand.flatMap((c,index)=>!c.revealed&&c.type==='empty'?[{type:'reveal',targetId:p.id,cardId:publicCardId(r,index)}]:[]));
