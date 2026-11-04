@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-04",
+  "app_version": "0.3.0",
+  "project_id": "appgprj_6ae9ddd15b3c81918479720e640cf360",
+  "version_number": 3,
+  "version_id": "appgprj_6ae9ddd15b3c81918479720e640cf360~appgver_dae2af02dd0c8191bd6c7c81bc96031b",
+  "deployment_id": "appgdep_6aea8c6dde0c8191b9f774cdd37fb2f0",
+  "status": "succeeded",
+  "url": "https://pig-house-exploration-1103.astralolm10.chatgpt.site",
+  "source_commit": "8c6c6b5f703c1295046e3bc8d5c39c562b5f166e",
+  "git_tag": "release/v0.3.0",
+  "archive_content_hash": "sha256:2f8e4e9c61936c6577fe7d62b98efbc6ee371bad2897c1b80223ae461f56fe13",
+  "rollback_version_id": "appgprj_6ae9ddd15b3c81918479720e640cf360~appgver_708ccb3caeb88191b0086c71eb5731e8",
+  "checks": {
+    "tests": 20,
+    "simulated_games": 800,
+    "rollback_compatibility_states": 150,
+    "typecheck": true,
+    "build": true,
+    "audio_full_decode": true,
+    "live_audio_matches_source": true,
+    "live_page": 200,
+    "live_anonymous_api": 401,
+    "live_forged_identity_api": 401,
+    "live_qr": 200,
+    "browser_audio_play_stop": true,
+    "browser_text_size_controls": true,
+    "browser_name_8_accept_9_reject": true,
+    "max_text_320px_lobby_and_waiting_room_no_overflow": true
+  },
+  "remaining": [
+    "Physical phone audio balance and multi-account V3 playtest",
+    "Background-tab pause/resume implemented; browser automation visibility test was inconclusive"
+  ]
+}
