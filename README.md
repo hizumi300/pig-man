@@ -7,7 +7,7 @@ ChatGPTログインで参加する3〜10人の正体隠匿カードゲーム。�
 ## 遊ぶ
 
 1. 公開URLまたは `public/invite-qr.png` のQRを開き、ChatGPTでログイン。
-2. ゲーム専用の表示名で部屋を作成。必要なら4〜64文字の合言葉を設定。
+2. 1〜8文字のゲーム専用表示名で部屋を作成。必要なら4〜64文字の合言葉を設定。
 3. 招待リンクを共有し、3人以上でホストが開始。
 4. 鍵を持つ人が他人のカードを1枚開く。鍵はそのカードの持ち主へ移る。
 5. 人数分のカードを開くと未公開カードを回収・再配布。5→4→3→2枚。
@@ -17,10 +17,12 @@ ChatGPTログインで参加する3〜10人の正体隠匿カードゲーム。�
 
 切断時は席を削除しません。同じChatGPTアカウントで同じURLを開くと復帰します。観戦者には未公開の手札・役職を配信しません。部屋内の表示名とチャットは参加者に公開されるので、個人情報は入力しないでください。
 
+画面上部のBGMボタンで、ダークなオリジナル曲「影の豚小屋」を再生できます。初期状態はOFF。音量と文字サイズ（小・標準・大・特大）は端末に保存されます。
+
 ## ソースと履歴
 
 - 元リポジトリ `pagigon/pig-man`、基点 `750c7ac91bda0b66a22c0847d98a4d6bd6a54564` のGit履歴を保持。
-- 開発ブランチ `codex/player-feedback-v2`（v0.2.0）。元のmainおよびRender環境は変更しない。
+- 開発ブランチ `codex/bgm-accessibility-v3`（v0.3.0）。元のmainおよびRender環境は変更しない。
 - `legacy/` は元のコードの比較用保管。新サイトから実行・配信しない。
 - 提供された `/Users/hasegawaryo/Downloads/webp/` の9画像を `public/images/` にコピー。
 - Sites側にも同じコミットを保存してから公開。公開バージョンとGit SHAを対応づける。
@@ -38,7 +40,7 @@ ChatGPTログインで参加する3〜10人の正体隠匿カードゲーム。�
 |`tests/`|800ゲームの性質テスト、実D1シミュレータによる同時操作テスト|
 |`public/invite-qr.png`, `public/invite-qr.svg`|ロビーへのQRコード|
 |`docs/RENOVATION.md`|原因分析・設計判断・制約・次の検証|
-|`docs/VALIDATION.md`, `docs/VALIDATION-V2.md`|検証結果と再実行手順|
+|`docs/VALIDATION.md`, `docs/VALIDATION-V2.md`, `docs/V3.md`|検証結果と再実行手順|
 
 Sites標準のVinextサーバー統合を利用し、ゲームルールはフレームワークに依存しないTypeScriptで分離。元のExpress/Socket.io常駐プロセスは不要。画面は対戦中約1秒、待機室2秒（ロビー5秒）間隔のHTTP同期、非表示時は停止します。
 
@@ -76,5 +78,5 @@ node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1
 - チャットは各ラウンド最新100件を保持し、終局・再戦・待機室への復帰で消去。探検ログは最新60件。
 - ランキング、リプレイ、音声通話、自動代打は未実装。
 - ロールバックはSitesで以前の検証済みバージョンを再デプロイ。DBマイグレーションは戻さず、互換性を確認する。
-- 復旧先はSites Version 1。Gitタグ `release/v1-online-verified-2026-11-04` と `docs/ROLLBACK-V1.json` に記録。削除済みチャット・部屋の復元はできない。元のRenderへ自動切替しない。
+- V3の復旧先はSites Version 2。Gitタグ `release/v0.2.0` と `docs/RELEASE-V2.json` に記録。Version 1も保存済み。削除済みチャット・部屋の復元はできない。元のRenderへ自動切替しない。
 - Gitで取り消す場合は対象の変更を `git revert` し、検証・ビルド・Sites公開をやり直す。共有履歴の強制pushはしない。

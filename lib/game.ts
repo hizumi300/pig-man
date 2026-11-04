@@ -1,5 +1,6 @@
 // Pure game rules. Storage, authentication, transport and UI are deliberately separate.
 import { roleRule } from './role-rules.ts';
+import { MAX_NAME_LENGTH, nameLength, normalizeDisplayName } from './display-name.ts';
 export type CardType = 'treasure' | 'trap' | 'empty';
 export type Role = 'adventurer' | 'guardian';
 export type Card = { id: string; type: CardType; revealed: boolean };
@@ -30,8 +31,8 @@ function requireThat(condition: unknown, message: string, status = 400): asserts
 }
 export function cleanName(value: unknown): string {
   requireThat(typeof value === 'string', '表示名を入力してください');
-  const name = value.normalize('NFKC').trim();
-  requireThat(name.length >= 1 && name.length <= 20 && !/[\p{Cc}\p{Cf}<>]/u.test(name), '表示名は1〜20文字で入力してください（制御文字・<>は使えません）');
+  const name = normalizeDisplayName(value);
+  requireThat(nameLength(name) >= 1 && nameLength(name) <= MAX_NAME_LENGTH && !/[\p{Cc}\p{Cf}<>]/u.test(name), '表示名は1〜8文字で入力してください（制御文字・<>は使えません）');
   return name;
 }
 export function shuffle<T>(input: T[], random: () => number = secureRandom): T[] {
