@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-04",
+  "app_version": "0.4.2",
+  "display_version": "V4.2",
+  "project_id": "appgprj_6ae9ddd15b3c81918479720e640cf360",
+  "version_number": 6,
+  "version_id": "appgprj_6ae9ddd15b3c81918479720e640cf360~appgver_7856365ad5dc8191a614416288e67f1d",
+  "deployment_id": "appgdep_6aeb428941ec81918e3816d6d0cabfd7",
+  "status": "succeeded",
+  "url": "https://pig-house-exploration-1103.astralolm10.chatgpt.site",
+  "source_commit": "7afee8f246bb6ce9ca49ee865e6d1b9b2f7ec6ae",
+  "git_tag": "release/v0.4.2",
+  "archive_content_hash": "sha256:224f02f1ee9215eefb5322940e292d65007a8decf7e46b073bcff7293283b2fe",
+  "rollback_version_id": "appgprj_6ae9ddd15b3c81918479720e640cf360~appgver_e2b2b1f108bc81919223ff70623ae434",
+  "checks": {
+    "tests": 25,
+    "typecheck": true,
+    "build": true,
+    "slider_bounds_and_buttons": true,
+    "live_values": [
+      "5人",
+      "2人",
+      "5個"
+    ],
+    "mobile_css_width": 320,
+    "mobile_modal_client_width": 288,
+    "mobile_modal_scroll_width": 288
+  },
+  "limitations": [
+    "Mobile layout verified in browser viewport emulation, not on a physical phone",
+    "No new production match created during slider verification"
+  ],
+  "database_changes": false
+}
